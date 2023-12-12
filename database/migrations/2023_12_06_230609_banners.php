@@ -18,6 +18,7 @@ class Banners extends Migration
             $table->string('name');
             $table->string('subtitle');
             $table->string('image');
+            $table->integer('status');
             $table->dateTime('created_at')->nullable('false');
             $table->dateTime('updated_at')->nullable('false');
             $table->dateTime('deleted_at')->nullable('true');

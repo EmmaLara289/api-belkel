@@ -135,10 +135,46 @@ class UserController extends Controller
             return response()->json($response, $status_code);
     }
 
+    public function deleteUser(Request $request){
+        $status_code = 400;
+        $response = [];
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_user' => 'required|integer|exists:users,id_user',
+            
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('users')
+            ->where('id_user', '=', $request->id_user)
+            ->delete();
+
+            $status_code = 200;
+            $response ['Message'] = "Success";
+
+        }
+
+            return response()->json($response, $status_code);
+    }
+
     public function getUsers(Request $request){
 
         return response()->json(
             DB::table('users')
+            ->get()
+            ,
+            200
+        );
+    }
+
+    public function getUsersDisable(Request $request){
+
+        return response()->json(
+            DB::table('users')
+            ->where('status', '!=', 1)
             ->get()
             ,
             200
@@ -162,7 +198,8 @@ class UserController extends Controller
             $banner = Banner::create([
                 'name' => $request->name,
                 'subtitle' => $request->subtitle,
-                'image' => ""
+                'image' => "",
+                'status' => 1,
             ]);
 
             $name = $banner->id_banner . md5(($request->image)->getClientOriginalName()) . '.' . ($request->image)->getClientOriginalExtension();
@@ -173,10 +210,10 @@ class UserController extends Controller
             DB::table('banners')
             ->where('id_banner', '=', $banner->id_banner)
             ->update([
-                'image' => $name
+                'image' => $url
             ]);
 
-            $response ['Message'] = $url;
+            $response ['Message'] = "Success";
             $status_code = 200;
 
         }
@@ -184,6 +221,87 @@ class UserController extends Controller
         return response()->json($response, $status_code);
 
     }
+
+    public function updateBanner(Request $request){
+        $response = [];
+        $status_code = 400;
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_banner' => 'required|integer|exists:banners,id_banner',
+            'name' => 'required|string|min:5',
+            'subtitle' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            $image = $request->file('image');
+            //return $image;
+            if($image){
+
+                $name = $request->id_banner . md5(($image)->getClientOriginalName()) . '.' . ($image)->getClientOriginalExtension();
+                $ruta = 'banners';
+                $save = Storage::disk('public')->put($ruta .'/' . $name, File::get($image));
+                $url = asset('storage/' . $ruta . '/' . $name);
+
+                DB::table('banners')
+                ->where('id_banner', '=', $request->id_banner)
+                ->update([
+                    'name' => $request->name,
+                    'subtitle' => $request->subtitle,
+                    'image' => "",
+                    'status' => 1,
+                    'image' => $url,
+                ]);
+
+                //return "no_vacio";
+            }else{
+
+                DB::table('banners')
+                ->where('id_banner', '=', $request->id_banner)
+                ->update([
+                    'name' => $request->name,
+                    'subtitle' => $request->subtitle,
+                    'image' => "",
+                    'status' => 1,
+                ]);
+
+                //return "vacio";
+            }
+            
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+
+    }
+
+    public function deleteBanner(Request $request){
+        $response = [];
+        $status_code = 400;
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_banner' => 'required|integer|exists:banners,id_banner'
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+            DB::table('banners')
+            ->where('id_banner', '=', $request->id_banner)
+            ->delete();
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+    }
+
 
     public function createMain(Request $request){
         $response = [];
@@ -210,6 +328,58 @@ class UserController extends Controller
         return response()->json($response, $status_code);
     }
 
+    public function updateMain(Request $request){
+        $response = [];
+        $status_code = 400;
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_main' => 'required|integer|exists:main,id_main',
+            'name' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('main')
+            ->where('id_main', '=', $request->id_main)
+            ->update([
+                'name' => $request->name,
+                'status' => 1
+            ]);
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+    }
+
+    public function deleteMain(Request $request){
+        $response = [];
+        $status_code = 400;
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_main' => 'required|integer|exists:main,id_main'
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('main')
+            ->where('id_main', '=', $request->id_main)
+            ->delete();
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+    }
+
     public function getMain(Request $request){
         return response()->json(
             DB::table('main')
@@ -222,6 +392,109 @@ class UserController extends Controller
         return response()->json(
             DB::table('banners')
             ->get(),
+            200
+        );
+    }
+
+    public function disableUser(Request $request){
+        $status_code = 400;
+        $response = [];
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_user' => 'required|integer|exists:users,id_user'
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('users')
+            ->where('id_user', '=', $request->id_user)
+            ->update([
+                'status' => 2
+            ]);
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+
+    }
+
+    public function disableMain(Request $request){
+        $status_code = 400;
+        $response = [];
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_main' => 'required|integer|exists:main,id_main'
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('main')
+            ->where('id_main', '=', $request->id_main)
+            ->update([
+                'status' => 2
+            ]);
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+
+    }
+
+    public function disableBanner(Request $request){
+        $status_code = 400;
+        $response = [];
+
+        $validator = Validator::make($request->all(), $rules = [
+            'id_banner' => 'required|integer|exists:banners,id_banner'
+        ]);
+
+        if ($validator->fails()) {
+            $response = $validator->errors();
+        } else {
+
+            DB::table('banners')
+            ->where('id_banner', '=', $request->id_banner)
+            ->update([
+                'status' => 2
+            ]);
+
+            $response ['Message'] = "Success";
+            $status_code = 200;
+
+        }
+
+        return response()->json($response, $status_code);
+
+    }
+
+    public function getBannersDisable(Request $request){
+
+        return response()->json(
+            DB::table('banners')
+            ->where('status', '!=', 1)
+            ->get()
+            ,
+            200
+        );
+    }
+
+    public function getMainsDisable(Request $request){
+
+        return response()->json(
+            DB::table('main')
+            ->where('status', '!=', 1)
+            ->get()
+            ,
             200
         );
     }
